@@ -1,0 +1,3 @@
+[submodule "libs/nikol"]
+	path = libs/nikol
+	url = https://github.com/FrodoAlaska/Nikol.git
