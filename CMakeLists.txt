@@ -28,7 +28,7 @@ add_subdirectory(libs/nikol)
 ### Final Build ###
 ############################################################
 # Copy the assets for all the examples to use
-file(COPY assets DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/${EXAMPLES_SRC_DIR})
+file(COPY assets DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 # List of all current examples
 add_subdirectory(${EXAMPLES_SRC_DIR}/hello_nikol)

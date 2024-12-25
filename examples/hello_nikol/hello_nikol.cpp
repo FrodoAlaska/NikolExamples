@@ -161,7 +161,7 @@ int main() {
   nikol::GfxBuffer* index_buff = nikol::gfx_buffer_create(gfx, index_desc);
 
   // Creating a texture and adding it to the draw call
-  nikol::GfxTextureDesc texture_desc = load_texture_from_file("assets/container.png");
+  nikol::GfxTextureDesc texture_desc = load_texture_from_file("assets/logo.png");
   nikol::GfxTexture* container_texture = nikol::gfx_texture_create(gfx, texture_desc);
  
   nikol::GfxPipelineDesc desc = {};
