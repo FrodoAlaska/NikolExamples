@@ -32,4 +32,5 @@ file(COPY assets DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 # List of all current examples
 add_subdirectory(${EXAMPLES_SRC_DIR}/hello_nikol)
+add_subdirectory(${EXAMPLES_SRC_DIR}/batch_renderer)
 ############################################################
