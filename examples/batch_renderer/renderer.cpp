@@ -1,8 +1,9 @@
 #include "renderer.h"
 
-#include <nikol/nikol_core.hpp>
-
 #include <vector>
+
+#include <nikol/nikol_core.hpp>
+#include <stb/stb_image.h>
 
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_transform.hpp>
@@ -185,6 +186,9 @@ static void init_pipeline() {
   s_renderer.pipe_desc.layout[3] = nikol::GfxLayoutDesc{"INDEX", nikol::GFX_LAYOUT_FLOAT1, 0};
   s_renderer.pipe_desc.layout_count = 4;
 
+  // Draw mode init 
+  s_renderer.pipe_desc.draw_mode = nikol::GFX_DRAW_MODE_TRIANGLE;
+
   // Textures init
   nikol::u32 pixels = 0xffffffff;
   nikol::GfxTextureDesc texture_desc = {
@@ -220,6 +224,23 @@ static void flush_renderer() {
   // Reset the indices and the textures
   s_renderer.pipe_desc.indices_count  = 0;
   s_renderer.pipe_desc.textures_count = 1;
+}
+
+static int find_texture(const nikol::GfxTexture* texture) {
+  int index = -1;
+
+  for(int i = 0; i < s_renderer.pipe_desc.textures_count; i++) {
+    nikol::GfxTexture* pipe_tex = s_renderer.pipe_desc.textures[i];
+
+    if(pipe_tex != texture) {
+      continue;
+    }
+      
+    index = i;
+    break;
+  }
+
+  return index;
 }
 
 /// Private functions
@@ -262,6 +283,59 @@ void renderer_end() {
   nikol::gfx_context_present(s_renderer.gfx);
 }
 
+void render_texture(nikol::GfxTexture* texture, const glm::vec2& pos, const glm::vec2& size, const glm::vec4& tint) {
+  bool can_flush = s_renderer.pipe_desc.indices_count >= MAX_INDICES || s_renderer.pipe_desc.textures_count >= nikol::TEXTURES_MAX;
+  if(can_flush) {
+    flush_renderer();
+  }
+
+  int index = find_texture(texture);
+  
+  // Adding the texture to be drawn later if it's new
+  if(index == -1) {
+    s_renderer.pipe_desc.textures[s_renderer.pipe_desc.textures_count] = texture;
+    index = s_renderer.pipe_desc.textures_count += 1;
+  }
+
+  glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(pos.x, pos.y, 0.0f)) * 
+                    glm::scale(glm::mat4(1.0f), glm::vec3(size.x, size.y, 0.0f));
+  glm::mat4 world_pos =  s_renderer.ortho_cam * model;
+
+  // Top-left 
+  Vertex v1; 
+  v1.pos            = world_pos * s_renderer.quad_vertices[0]; 
+  v1.color          = tint;
+  v1.texture_coords = pos / size; 
+  v1.texture_index  = index;
+  s_renderer.vertices.push_back(v1);
+ 
+  // Top-right
+  Vertex v2; 
+  v2.pos            = world_pos * s_renderer.quad_vertices[1]; 
+  v2.color          = tint;
+  v2.texture_coords = glm::vec2(pos.x + size.x, pos.y) / size; 
+  v2.texture_index  = index;
+  s_renderer.vertices.push_back(v2);
+ 
+  // Bottom-right
+  Vertex v3; 
+  v3.pos            = world_pos * s_renderer.quad_vertices[2]; 
+  v3.color          = tint;
+  v3.texture_coords = (pos + size) / size; 
+  v3.texture_index  = index;
+  s_renderer.vertices.push_back(v3);
+ 
+  // Bottom-left
+  Vertex v4; 
+  v4.pos            = world_pos * s_renderer.quad_vertices[3]; 
+  v4.color          = tint;
+  v4.texture_coords = glm::vec2(pos.x, pos.y + size.y) / size; 
+  v4.texture_index  = index;
+  s_renderer.vertices.push_back(v4);
+
+  s_renderer.pipe_desc.indices_count  += 6;
+}
+
 void render_quad(const glm::vec2& pos, const glm::vec2& size, const glm::vec4& color) {
   if(s_renderer.pipe_desc.indices_count >= MAX_INDICES) {
     flush_renderer();
@@ -269,40 +343,61 @@ void render_quad(const glm::vec2& pos, const glm::vec2& size, const glm::vec4& c
 
   glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(pos.x, pos.y, 0.0f)) * 
                     glm::scale(glm::mat4(1.0f), glm::vec3(size.x, size.y, 0.0f));
-  
+  glm::mat4 world_pos =  s_renderer.ortho_cam * model;
+
   // Top-left 
   Vertex v1; 
-  v1.pos            = s_renderer.ortho_cam * model * s_renderer.quad_vertices[0]; 
+  v1.pos            = world_pos * s_renderer.quad_vertices[0]; 
   v1.color          = color;
   v1.texture_coords = glm::vec2(0.0f, 0.0f); 
   v1.texture_index  = 0.0f;
   s_renderer.vertices.push_back(v1);
- 
+
   // Top-right
   Vertex v2; 
-  v2.pos            = s_renderer.ortho_cam * model * s_renderer.quad_vertices[1]; 
+  v2.pos            = world_pos * s_renderer.quad_vertices[1]; 
   v2.color          = color;
   v2.texture_coords = glm::vec2(1.0f, 0.0f); 
   v2.texture_index  = 0.0f;
   s_renderer.vertices.push_back(v2);
- 
+
   // Bottom-right
   Vertex v3; 
-  v3.pos            = s_renderer.ortho_cam * model * s_renderer.quad_vertices[2]; 
+  v3.pos            = world_pos * s_renderer.quad_vertices[2]; 
   v3.color          = color;
   v3.texture_coords = glm::vec2(1.0f, 1.0f); 
   v3.texture_index  = 0.0f;
   s_renderer.vertices.push_back(v3);
- 
+
   // Bottom-left
   Vertex v4; 
-  v4.pos            = s_renderer.ortho_cam * model * s_renderer.quad_vertices[3]; 
+  v4.pos            = world_pos * s_renderer.quad_vertices[3]; 
   v4.color          = color;
   v4.texture_coords = glm::vec2(0.0f, 1.0f); 
   v4.texture_index  = 0.0f;
   s_renderer.vertices.push_back(v4);
 
   s_renderer.pipe_desc.indices_count += 6;
+}
+
+nikol::GfxTexture* renderer_load_texture(const char* path) {
+  nikol::GfxTextureDesc desc; 
+
+  int width = 1, height = 1, channels;
+
+  stbi_set_flip_vertically_on_load(false);
+  nikol::u8* pixels = stbi_load(path, &width, &height, &channels, 4);
+  NIKOL_ASSERT(pixels, "Could not load a texture");
+
+  desc.width     = width; 
+  desc.height    = height;
+  desc.depth     = 0; 
+  desc.format    = nikol::GFX_TEXTURE_FORMAT_RGBA8; 
+  desc.filter    = nikol::GFX_TEXTURE_FILTER_MIN_MAG_NEAREST;
+  desc.wrap_mode = nikol::GFX_TEXTURE_WRAP_REPEAT;
+  desc.data      = pixels;
+
+  return nikol::gfx_texture_create(s_renderer.gfx, desc);
 }
 
 /// Public functions

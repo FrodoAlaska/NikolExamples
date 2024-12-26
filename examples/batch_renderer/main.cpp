@@ -2,6 +2,11 @@
 
 #include <nikol/nikol_core.hpp>
 #include <glm/glm.hpp>
+#include <stb/stb_image.h>
+
+const float SIZE = 64.0f;
+const int WINDOW_WIDTH = 1280; 
+const int WINDOW_HEIGHT = 640; 
 
 int main() {
   if(!nikol::init()) {
@@ -9,20 +14,34 @@ int main() {
   } 
 
   nikol::u32 win_flags = nikol::WINDOW_FLAGS_FOCUS_ON_SHOW | nikol::WINDOW_FLAGS_GFX_HARDWARE | nikol::WINDOW_FLAGS_RESIZABLE;
-  nikol::Window* window = nikol::window_open("Batch Renderer", 1280, 720, win_flags);
+  nikol::Window* window = nikol::window_open("Batch Renderer", WINDOW_WIDTH, WINDOW_HEIGHT, win_flags);
   NIKOL_ASSERT(window, "Could not open a window");
 
   renderer_create(window);
- 
+
+  int total_x = 30;
+  int total_y = 20;
+
   while(nikol::window_is_open(window)) {
     if(nikol::input_key_pressed(nikol::KEY_ESCAPE)) {
       break;
     }
   
+    float x = 1.0f + glm::sin(nikol::niclock_get_time()) * 2.0f; 
+    float y = glm::sin(nikol::niclock_get_time() / 2.0f) * 1.0f;
+
     renderer_clear(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
     renderer_begin();
-    
-    render_quad(glm::vec2(100.0f), glm::vec2(64.0f, 64.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+
+    float half_size = SIZE / 2.0f;
+   
+    for(int i = 1; i <= total_y; i++) {
+      for(int j = 1; j <= total_x; j++) {
+        render_quad(glm::vec2((j - 1) * SIZE, (i - 1) * SIZE), glm::vec2(SIZE), glm::vec4((x + y) * (j + i), y, x, 1.0f));
+      }
+    }
+
+    NIKOL_LOG_DEBUG("%f", nikol::niclock_get_fps());
 
     renderer_end();
     nikol::window_poll_events(window);
