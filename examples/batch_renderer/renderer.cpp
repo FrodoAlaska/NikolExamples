@@ -20,7 +20,7 @@ struct Vertex {
   glm::vec3 pos; 
   glm::vec2 texture_coords;
   glm::vec4 color;
-  float texture_index;
+  int texture_index;
 };
 /// Vertex 
 /// --------------------------------------------------------------------------------------
@@ -69,13 +69,13 @@ static const char* compile_shaders() {
     "layout (location = 0) in vec3 aPos;\n"
     "layout (location = 1) in vec2 aTextureCoords;\n"
     "layout (location = 2) in vec4 aColor;\n"
-    "layout (location = 3) in float aTextureIndex;\n"
+    "layout (location = 3) in int aTextureIndex;\n"
     "\n"
     "// Outputs\n"
     "out VS_OUT {\n"
     "  vec4 out_color;\n"
     "  vec2 tex_coords;\n"
-    "  float tex_index;\n"
+    "  int tex_index;\n"
     "} vs_out;\n"
     "\n"
     "void main() {\n"
@@ -102,7 +102,6 @@ static const char* compile_shaders() {
     "uniform sampler2D u_textures[32];\n"
     "\n"
     "void main() {\n"
-    "  int index  = int(fs_in.tex_index);\n"
     "  frag_color = texture(u_textures[index], fs_in.tex_coords) * fs_in.out_color;\n"
     "}\n";
 #elif defined(NIKOL_GFX_CONTEXT_DX11)
@@ -111,17 +110,17 @@ static const char* compile_shaders() {
     "    float3 position   : POS;\n"
     "    float2 tex_coords : TEX;\n"
     "    float4 color      : COLOR;\n"
-    "    float1 tex_index  : INDEX;\n"
+    "    int tex_index     : INDEX;\n"
     "};\n"
     "\n"
     "struct vs_out {\n"
     "    float4 position   : SV_POSITION;\n"
     "    float2 tex_coords : TEX;\n"
     "    float4 color      : COLOR;\n"
-    "    float1 tex_index  : INDEX;\n"
+    "    int tex_index     : INDEX;\n"
     "};\n"
     "\n"
-    "Texture2DArray textures    : register(t0);\n"
+    "Texture2D textures[32]     : register(t0);\n"
     "SamplerState samp          : register(s0);\n"
     "\n"
     "vs_out vs_main(vs_in input) {\n"
@@ -137,7 +136,7 @@ static const char* compile_shaders() {
     "\n"
     "float4 ps_main(vs_out input) : SV_TARGET {\n"
     "  float4 color;\n"
-    "  color = textures.Sample(samp, float3(input.tex_coords.x, input.tex_coords.y, input.tex_index)) * input.color;\n"
+    "  color = textures[1].Sample(samp, input.tex_coords) * input.color;\n"
     "  return color;\n"
     "}\n";
 #endif
@@ -182,7 +181,7 @@ static void init_pipeline() {
   s_renderer.pipe_desc.layout[0] = nikol::GfxLayoutDesc{"POS", nikol::GFX_LAYOUT_FLOAT3, 0};
   s_renderer.pipe_desc.layout[1] = nikol::GfxLayoutDesc{"TEX", nikol::GFX_LAYOUT_FLOAT2, 0};
   s_renderer.pipe_desc.layout[2] = nikol::GfxLayoutDesc{"COLOR", nikol::GFX_LAYOUT_FLOAT4, 0};
-  s_renderer.pipe_desc.layout[3] = nikol::GfxLayoutDesc{"INDEX", nikol::GFX_LAYOUT_FLOAT1, 0};
+  s_renderer.pipe_desc.layout[3] = nikol::GfxLayoutDesc{"INDEX", nikol::GFX_LAYOUT_INT1, 0};
   s_renderer.pipe_desc.layout_count = 4;
 
   // Draw mode init 
@@ -292,13 +291,13 @@ void render_texture(nikol::GfxTexture* texture, const glm::vec2& pos, const glm:
   
   // Adding the texture to be drawn later if it's new
   if(index == -1) {
-    s_renderer.pipe_desc.textures[s_renderer.pipe_desc.textures_count] = texture;
     index = s_renderer.pipe_desc.textures_count++;
+    s_renderer.pipe_desc.textures[index] = texture;
   }
 
-  glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(pos.x, pos.y, 0.0f)) * 
-                    glm::scale(glm::mat4(1.0f), glm::vec3(size.x, size.y, 0.0f));
-  glm::mat4 world_pos =  s_renderer.ortho_cam * model;
+  glm::mat4 model     = glm::translate(glm::mat4(1.0f), glm::vec3(pos.x, pos.y, 0.0f)) * 
+                        glm::scale(glm::mat4(1.0f), glm::vec3(size.x, size.y, 0.0f));
+  glm::mat4 world_pos = s_renderer.ortho_cam * model;
 
   // Top-left 
   Vertex v1; 
@@ -349,7 +348,7 @@ void render_quad(const glm::vec2& pos, const glm::vec2& size, const glm::vec4& c
   v1.pos            = world_pos * s_renderer.quad_vertices[0]; 
   v1.color          = color;
   v1.texture_coords = glm::vec2(0.0f, 0.0f); 
-  v1.texture_index  = 0.0f;
+  v1.texture_index  = 0;
   s_renderer.vertices.push_back(v1);
 
   // Top-right
@@ -357,7 +356,7 @@ void render_quad(const glm::vec2& pos, const glm::vec2& size, const glm::vec4& c
   v2.pos            = world_pos * s_renderer.quad_vertices[1]; 
   v2.color          = color;
   v2.texture_coords = glm::vec2(1.0f, 0.0f); 
-  v2.texture_index  = 0.0f;
+  v2.texture_index  = 0;
   s_renderer.vertices.push_back(v2);
 
   // Bottom-right
@@ -365,7 +364,7 @@ void render_quad(const glm::vec2& pos, const glm::vec2& size, const glm::vec4& c
   v3.pos            = world_pos * s_renderer.quad_vertices[2]; 
   v3.color          = color;
   v3.texture_coords = glm::vec2(1.0f, 1.0f); 
-  v3.texture_index  = 0.0f;
+  v3.texture_index  = 0;
   s_renderer.vertices.push_back(v3);
 
   // Bottom-left
@@ -373,7 +372,7 @@ void render_quad(const glm::vec2& pos, const glm::vec2& size, const glm::vec4& c
   v4.pos            = world_pos * s_renderer.quad_vertices[3]; 
   v4.color          = color;
   v4.texture_coords = glm::vec2(0.0f, 1.0f); 
-  v4.texture_index  = 0.0f;
+  v4.texture_index  = 0;
   s_renderer.vertices.push_back(v4);
 
   s_renderer.pipe_desc.indices_count += 6;
@@ -382,7 +381,7 @@ void render_quad(const glm::vec2& pos, const glm::vec2& size, const glm::vec4& c
 nikol::GfxTexture* renderer_load_texture(const char* path) {
   nikol::GfxTextureDesc desc; 
 
-  int width = 1, height = 1, channels;
+  int width, height, channels;
 
   stbi_set_flip_vertically_on_load(false);
   nikol::u8* pixels = stbi_load(path, &width, &height, &channels, 4);

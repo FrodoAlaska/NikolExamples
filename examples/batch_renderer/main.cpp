@@ -40,13 +40,11 @@ int main() {
     renderer_clear(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
     renderer_begin();
 
-    render_texture(texture, glm::vec2(100.0f), glm::vec2(SIZE)); 
-
-    // for(int i = 1; i <= total_y; i++) {
-    //   for(int j = 1; j <= total_x; j++) {
-    //     render_quad(glm::vec2((j - 1) * (SIZE + 1), (i - 1) * (SIZE + 1)), glm::vec2(SIZE), glm::vec4((x + y) * (j + i), y, x, 1.0f));
-    //   }
-    // }
+    for(int i = 1; i <= total_y; i++) {
+      for(int j = 1; j <= total_x; j++) {
+        render_texture(texture, glm::vec2((j - 1) * (SIZE + 1), (i - 1) * (SIZE + 1)), glm::vec2(SIZE), glm::vec4((x + y) * (j + i), y, x, 1.0f));
+      }
+    }
 
     renderer_end();
     nikol::window_poll_events(window);
