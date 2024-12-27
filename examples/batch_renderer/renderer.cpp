@@ -2,10 +2,7 @@
 
 #include <vector>
 
-#include <nikol/nikol_core.hpp>
 #include <stb/stb_image.h>
-
-#include <glm/glm.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
 
@@ -64,7 +61,7 @@ static void init_context(nikol::Window* window) {
 }
 
 static const char* compile_shaders() {
-#ifdef NIKOL_GFX_CONTEXT_OPENGL
+#if defined(NIKOL_GFX_CONTEXT_OPENGL)
   return 
     "#version 460 core\n"
     "\n"
@@ -108,7 +105,7 @@ static const char* compile_shaders() {
     "  int index  = int(fs_in.tex_index);\n"
     "  frag_color = texture(u_textures[index], fs_in.tex_coords) * fs_in.out_color;\n"
     "}\n";
-#elif NIKOL_GFX_CONTEXT_DX11
+#elif defined(NIKOL_GFX_CONTEXT_DX11)
   return 
     "struct vs_in {\n"
     "    float3 position   : POS;\n"
@@ -118,7 +115,7 @@ static const char* compile_shaders() {
     "};\n"
     "\n"
     "struct vs_out {\n"
-    "    float3 position   : SV_POSITION;\n"
+    "    float4 position   : SV_POSITION;\n"
     "    float2 tex_coords : TEX;\n"
     "    float4 color      : COLOR;\n"
     "    float1 tex_index  : INDEX;\n"
@@ -128,19 +125,21 @@ static const char* compile_shaders() {
     "SamplerState samp          : register(s0);\n"
     "\n"
     "vs_out vs_main(vs_in input) {\n"
-    "    vs_out out = (vs_out)0;\n"
+    "    vs_out output = (vs_out)0;\n"
     "\n"
-    "    out.position   = input.position;\n"
-    "    out.tex_coords = input.tex_coords;\n"
-    "    out.color      = input.color;\n"
-    "    out.tex_index  = input.tex_index;\n"
+    "    output.position   = float4(input.position, 1.0);\n"
+    "    output.tex_coords = input.tex_coords;\n"
+    "    output.color      = input.color;\n"
+    "    output.tex_index  = input.tex_index;\n"
     "\n" 
-    "    return out;\n"
+    "    return output;\n"
     "}\n"
     "\n"
-    "float4 ps_main(vs_out input) {\n"
-    "  return textures.Sample(samp, float3(input.tex_coords.x, input.tex_coords.y, input.tex_index)) * input.color;\n"
-    "}\n"
+    "float4 ps_main(vs_out input) : SV_TARGET {\n"
+    "  float4 color;\n"
+    "  color = textures.Sample(samp, float3(input.tex_coords.x, input.tex_coords.y, input.tex_index)) * input.color;\n"
+    "  return color;\n"
+    "}\n";
 #endif
 }
 

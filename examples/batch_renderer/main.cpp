@@ -1,9 +1,5 @@
 #include "renderer.h"
 
-#include <nikol/nikol_core.hpp>
-#include <glm/glm.hpp>
-#include <stb/stb_image.h>
-
 const float SIZE = 64.0f;
 const int WINDOW_WIDTH = 1280; 
 const int WINDOW_HEIGHT = 640; 
@@ -33,15 +29,11 @@ int main() {
     renderer_clear(glm::vec4(0.1f, 0.1f, 0.1f, 1.0f));
     renderer_begin();
 
-    float half_size = SIZE / 2.0f;
-   
     for(int i = 1; i <= total_y; i++) {
       for(int j = 1; j <= total_x; j++) {
-        render_quad(glm::vec2((j - 1) * SIZE, (i - 1) * SIZE), glm::vec2(SIZE), glm::vec4((x + y) * (j + i), y, x, 1.0f));
+        render_quad(glm::vec2((j - 1) * (SIZE + 1), (i - 1) * (SIZE + 1)), glm::vec2(SIZE), glm::vec4((x + y) * (j + i), y, x, 1.0f));
       }
     }
-
-    NIKOL_LOG_DEBUG("%f", nikol::niclock_get_fps());
 
     renderer_end();
     nikol::window_poll_events(window);
