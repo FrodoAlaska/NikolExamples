@@ -42,7 +42,7 @@ int main() {
 
     for(int i = 1; i <= total_y; i++) {
       for(int j = 1; j <= total_x; j++) {
-        render_texture(texture, glm::vec2((j - 1) * (SIZE + 1), (i - 1) * (SIZE + 1)), glm::vec2(SIZE), glm::vec4((x + y) * (j + i), y, x, 1.0f));
+        render_texture(texture, glm::vec2((j - 1) * SIZE, (i - 1) * SIZE), glm::vec2(SIZE), glm::vec4((x + y) * (j + i), y, x, 1.0f));
       }
     }
 

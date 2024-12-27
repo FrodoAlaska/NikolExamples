@@ -1,4 +1,5 @@
 #include "renderer.h"
+#include "nikol/nikol_core.hpp"
 
 #include <vector>
 
@@ -20,7 +21,7 @@ struct Vertex {
   glm::vec3 pos; 
   glm::vec2 texture_coords;
   glm::vec4 color;
-  int texture_index;
+  float texture_index;
 };
 /// Vertex 
 /// --------------------------------------------------------------------------------------
@@ -69,13 +70,13 @@ static const char* compile_shaders() {
     "layout (location = 0) in vec3 aPos;\n"
     "layout (location = 1) in vec2 aTextureCoords;\n"
     "layout (location = 2) in vec4 aColor;\n"
-    "layout (location = 3) in int aTextureIndex;\n"
+    "layout (location = 3) in float aTextureIndex;\n"
     "\n"
     "// Outputs\n"
     "out VS_OUT {\n"
     "  vec4 out_color;\n"
     "  vec2 tex_coords;\n"
-    "  int tex_index;\n"
+    "  float tex_index;\n"
     "} vs_out;\n"
     "\n"
     "void main() {\n"
@@ -102,6 +103,7 @@ static const char* compile_shaders() {
     "uniform sampler2D u_textures[32];\n"
     "\n"
     "void main() {\n"
+    "  int index = int(fs_in.tex_index);\n"
     "  frag_color = texture(u_textures[index], fs_in.tex_coords) * fs_in.out_color;\n"
     "}\n";
 #elif defined(NIKOL_GFX_CONTEXT_DX11)
@@ -181,7 +183,7 @@ static void init_pipeline() {
   s_renderer.pipe_desc.layout[0] = nikol::GfxLayoutDesc{"POS", nikol::GFX_LAYOUT_FLOAT3, 0};
   s_renderer.pipe_desc.layout[1] = nikol::GfxLayoutDesc{"TEX", nikol::GFX_LAYOUT_FLOAT2, 0};
   s_renderer.pipe_desc.layout[2] = nikol::GfxLayoutDesc{"COLOR", nikol::GFX_LAYOUT_FLOAT4, 0};
-  s_renderer.pipe_desc.layout[3] = nikol::GfxLayoutDesc{"INDEX", nikol::GFX_LAYOUT_INT1, 0};
+  s_renderer.pipe_desc.layout[3] = nikol::GfxLayoutDesc{"INDEX", nikol::GFX_LAYOUT_FLOAT1, 0};
   s_renderer.pipe_desc.layout_count = 4;
 
   // Draw mode init 
@@ -200,6 +202,14 @@ static void init_pipeline() {
   };
   s_renderer.pipe_desc.textures[0]    = nikol::gfx_texture_create(s_renderer.gfx, texture_desc);
   s_renderer.pipe_desc.textures_count = 1;
+
+  // For GLSL, we need to set the textures
+  int tex_ids[nikol::TEXTURES_MAX]; 
+  for(int i = 0; i < nikol::TEXTURES_MAX; i++) {
+    tex_ids[i] = i;
+  }
+  nikol::u32 uniform_loc = nikol::gfx_glsl_get_uniform_location(s_renderer.pipe_desc.shader, "u_textures");
+  nikol::gfx_glsl_upload_uniform_array(s_renderer.pipe_desc.shader, uniform_loc, nikol::TEXTURES_MAX, nikol::GFX_LAYOUT_INT1, tex_ids);
 
   // Pipeline init
   s_renderer.pipe = nikol::gfx_pipeline_create(s_renderer.gfx, s_renderer.pipe_desc);

@@ -8,7 +8,7 @@ set(EXAMPLES_LIBS_DIR ${CMAKE_SOURCE_DIR}/libs)
 set(EXAMPLES_INCLUDE_DIR ${EXAMPLES_SRC_DIR} ${EXAMPLES_LIBS_DIR} ${EXAMPLES_LIBS_DIR}/nikol/include ${EXAMPLES_LIBS_DIR}/glm)
 set(EXAMPLES_LIBRARIES nikol)
 
-set(EXAMPLES_BUILD_FLAGS "-w -W0")
+set(EXAMPLES_BUILD_FLAGS "-w")
 set(EXAMPLES_BUILD_TYPE DEBUG)
 ############################################################
 
