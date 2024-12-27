@@ -53,7 +53,7 @@ static Renderer s_renderer;
 static void init_context(nikol::Window* window) {
   s_renderer.gfx_desc = {
     .window = window,
-    .states = nikol::GFX_STATE_DEPTH | nikol::GFX_STATE_STENCIL,
+    .states = nikol::GFX_STATE_DEPTH | nikol::GFX_STATE_STENCIL | nikol::GFX_STATE_BLEND,
   };
 
   s_renderer.gfx = nikol::gfx_context_init(s_renderer.gfx_desc);
@@ -293,7 +293,7 @@ void render_texture(nikol::GfxTexture* texture, const glm::vec2& pos, const glm:
   // Adding the texture to be drawn later if it's new
   if(index == -1) {
     s_renderer.pipe_desc.textures[s_renderer.pipe_desc.textures_count] = texture;
-    index = s_renderer.pipe_desc.textures_count += 1;
+    index = s_renderer.pipe_desc.textures_count++;
   }
 
   glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(pos.x, pos.y, 0.0f)) * 
