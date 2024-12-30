@@ -14,13 +14,6 @@ set(EXAMPLE_SOURCES
 )
 ############################################################
 
-### Library Sources ###
-############################################################
-set(LIBS_SOURCES 
-  ${EXAMPLES_LIBS_DIR}/stb/stb_image.cpp
-)
-############################################################
-
 ### Final Build ###
 ############################################################
 add_executable(${PROJECT_NAME} ${EXAMPLE_SOURCES} ${LIBS_SOURCES})
